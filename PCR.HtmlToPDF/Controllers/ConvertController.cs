@@ -8,11 +8,15 @@ using System.Configuration;
 using System.Net.Http.Headers;
 
 using SelectPdf;
+using PCR.HtmlToPDF.Models;
+using log4net;
 
 namespace PCR.HtmlToPDF.Controllers
 {
     public class ConvertController : ApiController
     {
+        private static readonly ILog Log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         /// <summary>
         /// This function is used to read the HTML website url from config file
         /// Set the margins for PDF
@@ -27,49 +31,12 @@ namespace PCR.HtmlToPDF.Controllers
         {
             try
             {
-                string pdfFilePath = AppDomain.CurrentDomain.BaseDirectory + @"\Content\test.pdf"; 
+                string pdfFilePath = AppDomain.CurrentDomain.BaseDirectory + @"\Content\test.pdf";
 
                 HtmlToPdf converter = new HtmlToPdf();
 
-                // set converter options
-                converter.Options.PdfPageSize = PdfPageSize.A4;
-                converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
-                converter.Options.MarginLeft = 10;
-                converter.Options.MarginRight = 10;
-                converter.Options.MarginTop = 20;
-                converter.Options.MarginBottom = 20;
-
-                // header settings
-                converter.Options.DisplayHeader = true;
-                converter.Header.DisplayOnFirstPage = true;
-                converter.Header.DisplayOnOddPages = true;
-                converter.Header.DisplayOnEvenPages = true;
-                converter.Header.Height = 15;
-
-                // Set the sample data in header
-                PdfTextSection headerText = new PdfTextSection(4, 0, "Cloud PCR API", new Font("Arial", 12));
-                headerText.HorizontalAlign = PdfTextHorizontalAlign.Left;
-                headerText.VerticalAlign = PdfTextVerticalAlign.Middle;
-                converter.Header.Add(headerText);
-
-                // footer settings
-                converter.Options.DisplayFooter = true;
-                converter.Footer.DisplayOnFirstPage = true;
-                converter.Footer.DisplayOnOddPages = true;
-                converter.Footer.DisplayOnEvenPages = true;
-                converter.Footer.Height = 20;
-
-                // Set the current datetime in footer
-                PdfTextSection footerText = new PdfTextSection(4, 0, DateTime.Now.ToString("dd-MM-yyyy HH:mm"), new Font("Arial", 8));
-                footerText.HorizontalAlign = PdfTextHorizontalAlign.Left;
-                footerText.VerticalAlign = PdfTextVerticalAlign.Middle;
-                converter.Footer.Add(footerText);
-
-                // Set the page numbers in footer
-                footerText = new PdfTextSection(4, 0, "Page: {page_number} of {total_pages}  ", new Font("Arial", 8));
-                footerText.HorizontalAlign = PdfTextHorizontalAlign.Right;
-                footerText.VerticalAlign = PdfTextVerticalAlign.Middle;
-                converter.Footer.Add(footerText);
+                //Set the PDF configurations
+                Helper.ConfigurePDFOptions(ref converter);
 
                 //Retrieve the HTML webpage url and convert it to pdf
                 PdfDocument resultDocument = converter.ConvertUrl(ConfigurationManager.AppSettings["WebsiteURL"]);
@@ -89,6 +56,49 @@ namespace PCR.HtmlToPDF.Controllers
             {
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.BadRequest, ex.Message.ToString());
                 return response;
+            }
+        }
+
+        /// <summary>
+        /// This function is used to read HTML as a parameter as well as base url of html application, convert it to PDF and return it as byte array
+        /// </summary>
+        /// <param name="baseURL">Base URL of HTML application</param>
+        /// <param name="htmlString">HTML Code as string</param>
+        /// <returns>Returns the byte array of PDF, that was generated from HTML code</returns>
+        [HttpGet]
+        [Route("api/HTMLCodeToPDF")]
+        public HttpResponseMessage HTMLCodeToPDF(string baseURL, string htmlString)
+        {
+            try
+            {
+                htmlString = htmlString.Replace("|", "&").Replace("||", "#");
+
+                HtmlToPdf converter = new HtmlToPdf();
+
+                //Set the PDF configurations
+                Helper.ConfigurePDFOptions(ref converter);
+                
+                // create a new pdf document converting an url
+                PdfDocument resultDocument = converter.ConvertHtmlString(htmlString, baseURL);
+
+                // save pdf document
+                byte[] pdf = resultDocument.Save();
+
+                // close pdf document
+                resultDocument.Close();
+
+                HttpResponseMessage result = new HttpResponseMessage(HttpStatusCode.OK);
+                result = Request.CreateResponse(HttpStatusCode.OK);
+                result.Content = new ByteArrayContent(pdf);
+                result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.ToString());
+                HttpError err = new HttpError(ex.ToString());
+                return Request.CreateResponse(HttpStatusCode.NotFound, err);
+                
             }
         }
     }

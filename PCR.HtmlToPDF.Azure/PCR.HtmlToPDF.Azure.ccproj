@@ -49,9 +49,13 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="PCR.HtmlToPDFContent\" />
+    <Folder Include="Profiles" />
   </ItemGroup>
   <ItemGroup>
     <DiagnosticsConfiguration Include="PCR.HtmlToPDFContent\diagnostics.wadcfgx" />
+  </ItemGroup>
+  <ItemGroup>
+    <PublishProfile Include="Profiles\cloudpcrapi-devProduction.azurePubxml" />
   </ItemGroup>
   <!-- Import the target files for this project template -->
   <PropertyGroup>
