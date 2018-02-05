@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Web;
 
 using SelectPdf;
 
@@ -10,6 +7,9 @@ namespace PCR.HtmlToPDF.Models
 {
     public class Helper
     {
+        public string baseURL { get; set; }
+        public string htmlString { get; set; }
+
         /// <summary>
         /// This function is used to set the PDF configuration options
         /// 1. Header Settings

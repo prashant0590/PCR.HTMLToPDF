@@ -1,14 +1,15 @@
 ﻿using System;
 using System.IO;
 using System.Net;
-using System.Drawing;
 using System.Net.Http;
 using System.Web.Http;
 using System.Configuration;
 using System.Net.Http.Headers;
 
 using SelectPdf;
+
 using PCR.HtmlToPDF.Models;
+
 using log4net;
 
 namespace PCR.HtmlToPDF.Controllers
@@ -65,13 +66,13 @@ namespace PCR.HtmlToPDF.Controllers
         /// <param name="baseURL">Base URL of HTML application</param>
         /// <param name="htmlString">HTML Code as string</param>
         /// <returns>Returns the byte array of PDF, that was generated from HTML code</returns>
-        [HttpGet]
+        [HttpPost]
         [Route("api/HTMLCodeToPDF")]
-        public HttpResponseMessage HTMLCodeToPDF(string baseURL, string htmlString)
+        public HttpResponseMessage HTMLCodeToPDF(Helper helper)
         {
             try
             {
-                htmlString = htmlString.Replace("|", "&").Replace("||", "#");
+                helper.htmlString = helper.htmlString.Replace("|", "&").Replace("||", "#");
 
                 HtmlToPdf converter = new HtmlToPdf();
 
@@ -79,7 +80,7 @@ namespace PCR.HtmlToPDF.Controllers
                 Helper.ConfigurePDFOptions(ref converter);
                 
                 // create a new pdf document converting an url
-                PdfDocument resultDocument = converter.ConvertHtmlString(htmlString, baseURL);
+                PdfDocument resultDocument = converter.ConvertHtmlString(helper.htmlString, helper.baseURL);
 
                 // save pdf document
                 byte[] pdf = resultDocument.Save();
