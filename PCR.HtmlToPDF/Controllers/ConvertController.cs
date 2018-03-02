@@ -72,7 +72,7 @@ namespace PCR.HtmlToPDF.Controllers
         {
             try
             {
-                helper.htmlString = helper.htmlString.Replace("|", "&").Replace("||", "#");
+                helper.htmlString = helper.htmlString.Replace("\\", "&").Replace("//", "#");
 
                 HtmlToPdf converter = new HtmlToPdf();
 
